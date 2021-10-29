@@ -6,7 +6,7 @@ import json
 import os
 import shutil
 import pathlib
-from typing import List, Dict, Set
+from typing import List, Dict
 from distutils.dir_util import copy_tree
 
 from .index import PackageIndex, read_index, append_index
@@ -79,7 +79,8 @@ def install_package(lfs_dir: str, package: Package, verbose=False) -> bool:
     os.environ["TODD_FAKE_ROOT_DIR"] = FAKE_ROOT
     cmd_suffix = "" if verbose else " >/dev/null 2>&1"
     if os.system(f"{package.build_script}{cmd_suffix}") != 0:
-        print(f"running build script for {package.name}: failure", file=sys.stderr)
+        print(
+            f"running build script for {package.name}: failure", file=sys.stderr)
         return False
     print(f"running build script for {package.name}: ok")
 
@@ -88,7 +89,8 @@ def install_package(lfs_dir: str, package: Package, verbose=False) -> bool:
     for root, dirs, files in os.walk(FAKE_ROOT):
         for file in files:
             # green green, what is your problem green?
-            index_files.append(f"/{os.path.relpath(os.path.join(root, file), FAKE_ROOT)}")
+            index_files.append(
+                f"/{os.path.relpath(os.path.join(root, file), FAKE_ROOT)}")
     copy_tree(FAKE_ROOT, lfs_dir)
     append_index(lfs_dir, PackageIndex(
         package.name,
@@ -156,7 +158,8 @@ def install_packages(
             print(f"package '{name}' couldn't be found")
             return False
         if packages[name].env != env:
-            print(f"package '{name}' couldn't be found for environment '{env}'")
+            print(
+                f"package '{name}' couldn't be found for environment '{env}'")
             return False
         if name in index:
             print(f"installing {name}: already installed")
@@ -167,5 +170,6 @@ def install_packages(
             return False
     end = time.time()
     if measure_time:
-        print("all packages installed time:", datetime.timedelta(seconds=(end - start)))
+        print("all packages installed time:",
+              datetime.timedelta(seconds=(end - start)))
     return True
