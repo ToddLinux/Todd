@@ -4,7 +4,7 @@ import sys
 import os
 import shutil
 
-from .install import Package
+from .package_classes import Package
 
 __all__ = ["get_pkg_cache_dir", "get_local_file_name", "fetch_package_sources", "is_cached", "clear_cache"]
 

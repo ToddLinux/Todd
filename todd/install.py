@@ -10,34 +10,14 @@ from distutils.dir_util import copy_tree
 
 from .index import create_pkg_index, get_index, add_to_index
 from .cache_sources import get_pkg_cache_dir, is_cached, fetch_package_sources
+from .package_classes import Package
 
-__all__ = ["Package", "install_packages", "load_packages"]
+__all__ = ["install_packages", "load_packages"]
 
 
 FILE_DIR_PATH = pathlib.Path(__file__).parent.resolve()
 BUILD_FOLDER = "/tmp/todd_linux_build"
 FAKE_ROOT = "/tmp/todd_linux_fake_root"
-
-
-# represents build and installation
-class Package:
-    def __init__(
-        self,
-        name: str,
-        version: str,
-        src_urls: List[str],
-        env: str,
-        repo: str,
-        build_script_name: str = None,
-    ):
-        self.name = name
-        self.version = version
-        self.src_urls = src_urls
-        self.env = env
-        # TODO: add version to default script path
-        self.build_script = (
-            f"{repo}/{name}.sh" if build_script_name is None else f"{repo}/{build_script_name}"
-        )
 
 
 def get_sources(lfs_dir: str, package: Package) -> bool:

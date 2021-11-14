@@ -4,23 +4,13 @@ import os
 import pathlib
 from typing import Dict, List
 
-from .install import Package
+from .package_classes import Package, PackageIndex
 
-__all__ = ["PackageIndex", "create_pkg_index", "add_to_index", "get_index"]
+__all__ = ["create_pkg_index", "add_to_index", "get_index"]
 
 BASE_DIR = pathlib.Path(__file__).parent.resolve()
 INDEX_FILE_PATH = "/var/lib/todd/status.json"
 INDEX_FILE_DIR_PATH = "/var/lib/todd"
-
-
-class PackageIndex:
-    def __init__(self, name: str, version: str, files: List[str]):
-        # name of package
-        self.name = name
-        # installed version
-        self.version = version
-        # files belonging to package -> to be deleted when uninstalling
-        self.files = files
 
 
 def create_pkg_index(fake_root: str, package: Package) -> PackageIndex:
