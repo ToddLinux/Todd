@@ -8,8 +8,10 @@ import pathlib
 from typing import List, Dict
 from distutils.dir_util import copy_tree
 
-from .index import PackageIndex, create_pkg_index, get_index, add_to_index
+from .index import create_pkg_index, get_index, add_to_index
 from .cache_sources import get_pkg_cache_dir, is_cached, fetch_package_sources
+
+__all__ = ["Package", "install_packages", "load_packages"]
 
 
 FILE_DIR_PATH = pathlib.Path(__file__).parent.resolve()

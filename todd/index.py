@@ -6,6 +6,8 @@ from typing import Dict, List
 
 from .install import Package
 
+__all__ = ["PackageIndex", "create_pkg_index", "add_to_index", "get_index"]
+
 BASE_DIR = pathlib.Path(__file__).parent.resolve()
 INDEX_FILE_PATH = "/var/lib/todd/status.json"
 INDEX_FILE_DIR_PATH = "/var/lib/todd"

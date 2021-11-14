@@ -6,6 +6,8 @@ import shutil
 
 from .install import Package
 
+__all__ = ["get_pkg_cache_dir", "get_local_file_name", "fetch_package_sources", "is_cached", "clear_cache"]
+
 PKG_CACHE_DIRECTORY = "/var/cache/todd"
 
 
