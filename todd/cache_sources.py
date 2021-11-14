@@ -1,19 +1,28 @@
+"""Download, track and delete cache package sources for later use."""
 import requests
 import sys
 import os
 import shutil
 
+from .install import Package
+
 PKG_CACHE_DIRECTORY = "/var/cache/todd"
+
+
+def get_pkg_cache_dir(lfs_dir: str, package: Package) -> str:
+    """Get path to caching directory for package."""
+    cache_dir = f"{lfs_dir}/{PKG_CACHE_DIRECTORY}"
+    return f"{cache_dir}/{package.name}/{package.version}"
 
 
 def dwn_file(url: str, file_path: str, source_pretty_name: str) -> bool:
     """
     Download file
 
-    :param url: source URI
-    :param file_path: file to which the downloaded content will be to be written to
+    :param url: source URL
+    :param file_path: file to which the downloaded content will be written to
     :param source_pretty_name: name of the source, for logging purposes
-    :return: true if successfully downloaded all package sources false otherwise
+    :return: True if successfully downloaded all package sources False otherwise
     """
     print(f"downloading {source_pretty_name}: ...")
     with requests.get(url, stream=True) as r:
@@ -37,22 +46,24 @@ def get_local_file_name(url: str) -> str:
     return url.split("/")[-1]
 
 
-def fetch_package_sources(package, package_dest_dir: str) -> bool:
+def fetch_package_sources(lfs_dir: str, package: Package) -> bool:
     """
     Download all package sources for package
 
+    :param lfs_dir: package management system root directory
     :param package: package for which the sources are being downloaded
-    :param package_dest_dir: directory to which the package sources are going to be written to
-    :return: true if successfully downloaded all package sources false otherwise
+    :return: True if successfully downloaded all package sources False otherwise
     """
-    if not os.path.isdir(package_dest_dir):
-        os.makedirs(package_dest_dir)
+    pkg_cache_dir = get_pkg_cache_dir(lfs_dir, package)
+    if not os.path.isdir(pkg_cache_dir):
+        os.makedirs(pkg_cache_dir)
+
     for url in package.src_urls:
         local_file_name = get_local_file_name(url)
-        dest_file = f"{package_dest_dir}/{local_file_name}"
+        dest_file = f"{pkg_cache_dir}/{local_file_name}"
         # TODO: checksum
         if not os.path.isfile(dest_file):
-            if not dwn_file(url, dest_file, local_file_name):  # lol
+            if not dwn_file(url, dest_file, local_file_name):
                 return False
         else:
             print(f"Source: '{local_file_name}' for package {package.name} already downloaded")
@@ -60,24 +71,23 @@ def fetch_package_sources(package, package_dest_dir: str) -> bool:
     return True
 
 
-def is_cached(package, lfs_dir: str) -> bool:
+def is_cached(lfs_dir: str, package: Package) -> bool:
     """
     Check if all package sources for specified package have been downloaded
 
-    :param package: package for which sources are being checked
     :param lfs_dir: package management system root directory
-    :return: true if all satisfied false otherwise
+    :param package: package for which sources are being checked
+    :return: True if all satisfied False otherwise
     """
-    cache_dir = f"{lfs_dir}/{PKG_CACHE_DIRECTORY}"
-    package_dest_dir = f"{cache_dir}/{package.name}/{package.version}"
+    pkg_cache_dir = get_pkg_cache_dir(lfs_dir, package)
     return all([
-        os.path.isfile(f"{package_dest_dir}/{get_local_file_name(url)}")
+        os.path.isfile(f"{pkg_cache_dir}/{get_local_file_name(url)}")
         for url
         in package.src_urls
     ])
 
 
-def clear_cache(lfs_dir: str):
+def clear_cache(lfs_dir: str) -> None:
     """
     Delete downloaded package sources
 

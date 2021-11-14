@@ -1,4 +1,3 @@
-# See LICENSE for license details.
 import sys
 import time
 import datetime
@@ -9,8 +8,8 @@ import pathlib
 from typing import List, Dict
 from distutils.dir_util import copy_tree
 
-from .index import PackageIndex, read_index, append_index
-from .download import PKG_CACHE_DIRECTORY, is_cached, fetch_package_sources
+from .index import PackageIndex, create_pkg_index, get_index, add_to_index
+from .cache_sources import get_pkg_cache_dir, is_cached, fetch_package_sources
 
 
 FILE_DIR_PATH = pathlib.Path(__file__).parent.resolve()
@@ -27,32 +26,29 @@ class Package:
         src_urls: List[str],
         env: str,
         repo: str,
-        build_script: str = None,
+        build_script_name: str = None,
     ):
         self.name = name
         self.version = version
         self.src_urls = src_urls
-        self.build_script = (
-            f"{repo}/{name}.sh" if build_script is None else f"{repo}/{build_script}"
-        )
         self.env = env
-        # files to be deleted when uninstalling
-        self.index: List[str] = []
-
-    def __repr__(self):
-        return f"<Package: '{self.name}' v.'{self.version}' src_urls: {', '.join(self.src_urls)} build_script: '{self.build_script}'>"
+        # TODO: add version to default script path
+        self.build_script = (
+            f"{repo}/{name}.sh" if build_script_name is None else f"{repo}/{build_script_name}"
+        )
 
 
 def get_sources(lfs_dir: str, package: Package) -> bool:
-    cache_dir = f"{lfs_dir}/{PKG_CACHE_DIRECTORY}"
-    package_dest_dir = f"{cache_dir}/{package.name}/{package.version}"
-    if not is_cached(package, lfs_dir):
-        if not fetch_package_sources(package, package_dest_dir):
+    """Fetch all sources that haven't been cached yet."""
+    pkg_cache_dir = get_pkg_cache_dir(lfs_dir, package)
+    if not is_cached(lfs_dir, package):
+        if not fetch_package_sources(pkg_cache_dir, package):
             return False
 
     print("copying package sources into build directory: ...")
-    for file in os.listdir(package_dest_dir):
-        shutil.copy(f"{package_dest_dir}/{file}", BUILD_FOLDER)
+    for file in os.listdir(pkg_cache_dir):
+        shutil.copy(f"{pkg_cache_dir}/{file}", BUILD_FOLDER)
+    print("copying package sources into build directory: ok")
 
     return True
 
@@ -73,44 +69,37 @@ def install_package(lfs_dir: str, package: Package, verbose=False) -> bool:
     print(f"getting sources for {package.name}: ...")
     if not get_sources(lfs_dir, package):
         return False
+    print(f"getting sources for {package.name}: ok")
 
     print(f"running build script for {package.name}: ...")
     os.environ["TODD_BUILD_DIR"] = BUILD_FOLDER
     os.environ["TODD_FAKE_ROOT_DIR"] = FAKE_ROOT
     cmd_suffix = "" if verbose else " >/dev/null 2>&1"
     if os.system(f"{package.build_script}{cmd_suffix}") != 0:
-        print(
-            f"running build script for {package.name}: failure", file=sys.stderr)
+        print(f"running build script for {package.name}: failure", file=sys.stderr)
         return False
     print(f"running build script for {package.name}: ok")
 
     print("copying files into root: ...")
-    index_files: List[str] = []
-    for root, dirs, files in os.walk(FAKE_ROOT):
-        for file in files:
-            # green green, what is your problem green?
-            index_files.append(
-                f"/{os.path.relpath(os.path.join(root, file), FAKE_ROOT)}")
+    pkg_index = create_pkg_index(FAKE_ROOT, package)
     copy_tree(FAKE_ROOT, lfs_dir)
-    append_index(lfs_dir, PackageIndex(
-        package.name,
-        package.version,
-        index_files
-    ))
+    add_to_index(lfs_dir, pkg_index)
     print("copying files into root: ok, index updated")
 
     return True
 
 
-# load all available packages from repo
 def load_packages(repo: str) -> Dict[str, Package]:
+    """Load all available packages from repo."""
     with open(f"{repo}/packages.json", "r", newline="") as file:
-        raw_packages = json.loads(file.read())
+        raw_packages = json.loads(file.read())["packages"]
     packages = {}
-    for raw_pkg in raw_packages["packages"]:
+    for raw_pkg in raw_packages:
         # check integrity of packages file
+        # TODO: use json schema
         if (
             raw_pkg.get("name") is None
+            or raw_pkg.get("version") is None
             or raw_pkg.get("src_urls") is None
             or raw_pkg.get("env") is None
         ):
@@ -135,7 +124,6 @@ def load_packages(repo: str) -> Dict[str, Package]:
     return packages
 
 
-# install all requested packages in order
 def install_packages(
     names: List[str],
     repo: str,
@@ -143,10 +131,10 @@ def install_packages(
     lfs_dir: str,
     verbose: bool,
     jobs: int,
-    measure_time: bool,
 ) -> bool:
+    """install all requested packages in order"""
     os.environ["MAKEFLAGS"] = f"-j{jobs}"
-    index = read_index(lfs_dir)
+    index = get_index(lfs_dir)
     packages = load_packages(repo)
 
     print("attempting installation of the following packages:")
@@ -169,7 +157,5 @@ def install_packages(
         if not install_package(lfs_dir, packages[name],  verbose=verbose):
             return False
     end = time.time()
-    if measure_time:
-        print("all packages installed time:",
-              datetime.timedelta(seconds=(end - start)))
+    print("all packages installed time:", datetime.timedelta(seconds=(end - start)))
     return True

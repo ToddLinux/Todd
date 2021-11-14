@@ -3,9 +3,19 @@ import subprocess
 
 from typing import List
 
-# TODO: change this to dataclass
+
 class Requirement:
-    def __init__(self, name: str, min_version: str, command: List[str], version_regex_pattern: str, later_version_ok: bool, read_stderr_instead_of_stdout: bool):
+    """This program has to be installed with a specific version"""
+
+    def __init__(
+        self,
+        name: str,
+        min_version: str,
+        command: List[str],
+        version_regex_pattern: str,
+        later_version_ok: bool,
+        read_stderr_instead_of_stdout: bool
+    ):
         self.name = name
         self.min_version = min_version
         # quotes in command not supported
@@ -15,11 +25,11 @@ class Requirement:
         self.read_stderr_instead_of_stdout = read_stderr_instead_of_stdout
 
     def __repr__(self):
-        return f"<Requirement name: '{self.name}'\tmin_version: '{self.min_version}'\tcommand: '{self.command}'\tversion_regex_pattern: '{self.version_regex_pattern}' later_version_ok: {self.later_version_ok}\tread_stderr_instead_of_stdout: {self.read_stderr_instead_of_stdout}>"
+        return f"<Requirement name: '{self.name}' min_version: '{self.min_version}' command: '{self.command}' version_regex_pattern: '{self.version_regex_pattern}' later_version_ok: {self.later_version_ok}\tread_stderr_instead_of_stdout: {self.read_stderr_instead_of_stdout}>"
 
 
-# get installed version from command output
 def get_installed_version(req: Requirement, output: str) -> str:
+    """get installed version from command output"""
     pattern = re.compile(req.version_regex_pattern)
     match = pattern.findall(output.replace("\n", ""))
     if match:
@@ -27,8 +37,8 @@ def get_installed_version(req: Requirement, output: str) -> str:
     raise ValueError(f"regex broken for {req}")
 
 
-# check if min version is satisfied with output of version check command
 def satisfied(req: Requirement, installed_version) -> bool:
+    """check if min version is satisfied with output of version check command"""
     try:
         min_parts = req.min_version.split(".")
         ins_parts = installed_version.split(".")
@@ -73,8 +83,8 @@ def satisfied(req: Requirement, installed_version) -> bool:
         raise ValueError(f"Version broken for {req}")
 
 
-# run command and collect stdout only
-def collect_stdout(command):
+def collect_stdout(command: List[str]):
+    """run command and collect stdout only"""
     return subprocess.run(command,
                           check=True,
                           stdin=subprocess.DEVNULL,
@@ -82,8 +92,8 @@ def collect_stdout(command):
                           stderr=subprocess.DEVNULL).stdout.decode()
 
 
-# run command and collect stderr only
-def collect_stderr(command):
+def collect_stderr(command: List[str]):
+    """run command and collect stderr only"""
     # dedicated to bzip2
     return subprocess.run(command,
                           check=True,
@@ -92,20 +102,19 @@ def collect_stderr(command):
                           stderr=subprocess.PIPE).stderr.decode()
 
 
-# run requirement command and collect output
-def collect_output(requirement):
-    if requirement.read_stderr_instead_of_stdout:
-        return collect_stderr(requirement.command)
+def collect_output(req: Requirement):
+    """run requirement command and collect output"""
+    if req.read_stderr_instead_of_stdout:
+        return collect_stderr(req.command)
     else:
-        return collect_stdout(requirement.command)
+        return collect_stdout(req.command)
 
 
-# return False if not satisfied
 def check_req(req: Requirement) -> bool:
+    """return False if not satisfied"""
     print(f"checking {req.name}: ...")
     try:
         output = collect_output(req)
-
         installed_version = get_installed_version(req, output)
 
         if not satisfied(req, installed_version):
