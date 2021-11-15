@@ -13,8 +13,7 @@ PKG_CACHE_DIRECTORY = "/var/cache/todd"
 
 def get_pkg_cache_dir(lfs_dir: str, package: Package) -> str:
     """Get path to caching directory for package."""
-    cache_dir = f"{lfs_dir}/{PKG_CACHE_DIRECTORY}"
-    return f"{cache_dir}/{package.name}/{package.version}"
+    return f"{lfs_dir}/{PKG_CACHE_DIRECTORY}/{package.name}/{package.version}"
 
 
 def dwn_file(url: str, file_path: str, source_pretty_name: str) -> bool:
