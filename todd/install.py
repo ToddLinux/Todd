@@ -18,6 +18,7 @@ __all__ = ["install_packages", "load_packages"]
 FILE_DIR_PATH = pathlib.Path(__file__).parent.resolve()
 BUILD_FOLDER = "/tmp/todd_linux_build"
 FAKE_ROOT = "/tmp/todd_linux_fake_root"
+LFS_TGT = "x86_64-lfs-linux-gnu"
 
 
 def get_sources(lfs_dir: str, package: Package) -> bool:
@@ -56,6 +57,7 @@ def install_package(lfs_dir: str, package: Package, verbose=False) -> bool:
     print(f"running build script for {package.name}: ...")
     os.environ["TODD_BUILD_DIR"] = BUILD_FOLDER
     os.environ["TODD_FAKE_ROOT_DIR"] = FAKE_ROOT
+    os.environ["LFS_TGT"] = LFS_TGT
     cmd_suffix = "" if verbose else " >/dev/null 2>&1"
     if os.system(f"{package.build_script}{cmd_suffix}") != 0:
         print(f"running build script for {package.name}: failure", file=sys.stderr)
