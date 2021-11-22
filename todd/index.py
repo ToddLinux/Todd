@@ -26,7 +26,8 @@ def create_pkg_index(fake_root: str, package: Package) -> PackageIndex:
     return PackageIndex(
         package.name,
         package.version,
-        index_files
+        package.pass_idx,
+        index_files,
     )
 
 
@@ -35,6 +36,16 @@ def add_to_index(lfs_dir: str, new_pkg: PackageIndex) -> None:
     if new_pkg.name in index:
         raise ValueError(f"Can't add already installed package {new_pkg.name} to index.")
     index[new_pkg.name] = new_pkg
+    update_index(lfs_dir, index)
+
+
+def augment_to_index(lfs_dir: str, pkg: PackageIndex) -> None:
+    """Used for multiple passes of the same package."""
+    index = get_index(lfs_dir)
+    if pkg.name not in index:
+        raise ValueError(f"Can't augment not installed package {pkg.name} to index.")
+    index[pkg.name].files += pkg.files
+    index[pkg.name].pass_idx += pkg.pass_idx
     update_index(lfs_dir, index)
 
 
@@ -57,7 +68,7 @@ def get_index(lfs_dir: str) -> Dict[str, PackageIndex]:
     with open(f"{lfs_dir}/{INDEX_FILE_PATH}", "r") as file:
         pkgs_json = json.load(file)
         for pkg_json in pkgs_json.values():
-            index[pkg_json["name"]] = PackageIndex(pkg_json["name"], pkg_json["version"], pkg_json["files"])
+            index[pkg_json["name"]] = PackageIndex(pkg_json["name"], pkg_json["version"], pkg_json["pass_idx"], pkg_json["files"])
     return index
 
 
