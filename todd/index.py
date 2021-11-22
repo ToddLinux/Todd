@@ -13,6 +13,10 @@ INDEX_FILE_PATH = "/var/lib/todd/status.json"
 INDEX_FILE_DIR_PATH = "/var/lib/todd"
 
 
+def pkg_index_exists(lfs_dir: str) -> bool:
+    return os.path.isfile(f"{lfs_dir}/{INDEX_FILE_PATH}")
+
+
 def create_pkg_index(fake_root: str, package: Package) -> PackageIndex:
     """Index files created for this package in the fake root."""
     index_files: List[str] = []
@@ -37,7 +41,7 @@ def add_to_index(lfs_dir: str, new_pkg: PackageIndex) -> None:
 def remove_from_index(lfs_dir: str, del_pkg_name: str) -> None:
     index = get_index(lfs_dir)
     if del_pkg_name not in index:
-        raise ValueError(f"Can't remove package {del_pkg_name}, which hasn't been instaslled")
+        raise ValueError(f"Can't remove package {del_pkg_name}, which hasn't been installed")
     del index[del_pkg_name]
     update_index(lfs_dir, index)
 
