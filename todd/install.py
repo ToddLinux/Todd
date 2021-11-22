@@ -37,7 +37,7 @@ def get_sources(lfs_dir: str, package: Package) -> bool:
 
 
 def install_package(lfs_dir: str, pkg: Package, verbose=False) -> bool:
-    print(f"preparing {pkg.name}: ...")
+    print(f"preparing {pkg.name} for pass {pkg.pass_idx}: ...")
     # delete and create build and fake root folder
     if os.path.isdir(BUILD_FOLDER):
         shutil.rmtree(BUILD_FOLDER)
@@ -47,22 +47,22 @@ def install_package(lfs_dir: str, pkg: Package, verbose=False) -> bool:
     os.mkdir(FAKE_ROOT)
 
     os.chdir(BUILD_FOLDER)
-    print(f"preparing {pkg.name}: ok")
+    print(f"preparing {pkg.name} for pass {pkg.pass_idx}: ok")
 
-    print(f"getting sources for {pkg.name}: ...")
+    print(f"getting sources for {pkg.name} for pass {pkg.pass_idx}: ...")
     if not get_sources(lfs_dir, pkg):
         return False
-    print(f"getting sources for {pkg.name}: ok")
+    print(f"getting sources for {pkg.name} for pass {pkg.pass_idx}: ok")
 
-    print(f"running build script for {pkg.name}: ...")
+    print(f"running build script for {pkg.name} for pass {pkg.pass_idx}: ...")
     os.environ["TODD_BUILD_DIR"] = BUILD_FOLDER
     os.environ["TODD_FAKE_ROOT_DIR"] = FAKE_ROOT
     os.environ["LFS_TGT"] = LFS_TGT
     cmd_suffix = "" if verbose else " >/dev/null 2>&1"
     if os.system(f"{pkg.build_script}{cmd_suffix}") != 0:
-        print(f"running build script for {pkg.name}: failure", file=sys.stderr)
+        print(f"running build script for {pkg.name} for pass {pkg.pass_idx}: failure", file=sys.stderr)
         return False
-    print(f"running build script for {pkg.name}: ok")
+    print(f"running build script for {pkg.name} for pass {pkg.pass_idx}: ok")
 
     print("copying files into root: ...")
     pkg_index = create_pkg_index(FAKE_ROOT, pkg)
@@ -105,7 +105,6 @@ def load_packages(repo: str) -> Dict[Tuple[str, int], Package]:
             raw_pkg.get("build_script"),
         )
         # TODO: work with versions
-        # TODO: test this
         if (package.name, package.pass_idx) in packages:
             raise ValueError(
                 f"The repository '{repo}' contains the package '{package.name}' pass {package.pass_idx} twice"
@@ -146,7 +145,7 @@ def install_packages(
         if package.name in index:
             package_idx = index[package.name]
             if package_idx.pass_idx >= package.pass_idx:
-                print(f"installing '{package.name}' for pass {package.pass_idx}: already installed or already replaced with later pass")
+                print(f"installing '{package.name}' for pass {package.pass_idx}: already installed or replaced with later pass")
                 continue
             if package_idx.pass_idx < package.pass_idx - 1:
                 print(f"package '{package.name}' for pass {package.pass_idx} hasn't finished earlier passes")

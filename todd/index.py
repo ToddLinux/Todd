@@ -41,6 +41,7 @@ def augment_to_index(lfs_dir: str, pkg: PackageIndex) -> None:
     if pkg.name not in index:
         raise ValueError(f"Can't augment not installed package {pkg.name} to index.")
     index[pkg.name].files += pkg.files
+    index[pkg.name].pass_idx += pkg.pass_idx
     update_index(lfs_dir, index)
 
 
