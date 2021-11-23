@@ -1,15 +1,15 @@
-import sys
-import time
 import datetime
 import json
 import os
-import shutil
 import pathlib
-from typing import List, Dict, Tuple
+import shutil
+import sys
+import time
 from distutils.dir_util import copy_tree
+from typing import Dict, List, Tuple
 
-from .index import create_pkg_index, get_index, add_to_index, augment_to_index
-from .cache_sources import get_pkg_cache_dir, is_cached, fetch_package_sources
+from .cache_sources import fetch_package_sources, get_pkg_cache_dir, is_cached
+from .index import add_to_index, augment_to_index, create_pkg_index, get_index
 from .package_classes import Package
 
 __all__ = ["install_packages", "load_packages"]
@@ -60,7 +60,10 @@ def install_package(lfs_dir: str, pkg: Package, verbose=False) -> bool:
     os.environ["LFS_TGT"] = LFS_TGT
     cmd_suffix = "" if verbose else " >/dev/null 2>&1"
     if os.system(f"{pkg.build_script}{cmd_suffix}") != 0:
-        print(f"running build script for {pkg.name} for pass {pkg.pass_idx}: failure", file=sys.stderr)
+        print(
+            f"running build script for {pkg.name} for pass {pkg.pass_idx}: failure",
+            file=sys.stderr,
+        )
         return False
     print(f"running build script for {pkg.name} for pass {pkg.pass_idx}: ok")
 
@@ -106,9 +109,7 @@ def load_packages(repo: str) -> Dict[Tuple[str, int], Package]:
         )
         # TODO: work with versions
         if (package.name, package.pass_idx) in packages:
-            raise ValueError(
-                f"The repository '{repo}' contains the package '{package.name}' pass {package.pass_idx} twice"
-            )
+            raise ValueError(f"The repository '{repo}' contains the package '{package.name}' pass {package.pass_idx} twice")
         packages[(package.name, package.pass_idx)] = package
 
     return packages

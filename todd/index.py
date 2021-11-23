@@ -68,7 +68,12 @@ def get_index(lfs_dir: str) -> Dict[str, PackageIndex]:
     with open(f"{lfs_dir}/{INDEX_FILE_PATH}", "r") as file:
         pkgs_json = json.load(file)
         for pkg_json in pkgs_json.values():
-            index[pkg_json["name"]] = PackageIndex(pkg_json["name"], pkg_json["version"], pkg_json["pass_idx"], pkg_json["files"])
+            index[pkg_json["name"]] = PackageIndex(
+                pkg_json["name"],
+                pkg_json["version"],
+                pkg_json["pass_idx"],
+                pkg_json["files"],
+            )
     return index
 
 

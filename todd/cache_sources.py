@@ -1,12 +1,19 @@
 """Download, track and delete cache package sources for later use."""
-import requests
-import sys
 import os
 import shutil
+import sys
+
+import requests
 
 from .package_classes import Package
 
-__all__ = ["get_pkg_cache_dir", "get_local_file_name", "fetch_package_sources", "is_cached", "clear_cache"]
+__all__ = [
+    "get_pkg_cache_dir",
+    "get_local_file_name",
+    "fetch_package_sources",
+    "is_cached",
+    "clear_cache",
+]
 
 PKG_CACHE_DIRECTORY = "/var/cache/todd"
 
@@ -81,11 +88,7 @@ def is_cached(lfs_dir: str, package: Package) -> bool:
     :return: True if all satisfied False otherwise
     """
     pkg_cache_dir = get_pkg_cache_dir(lfs_dir, package)
-    return all([
-        os.path.isfile(f"{pkg_cache_dir}/{get_local_file_name(url)}")
-        for url
-        in package.src_urls
-    ])
+    return all([os.path.isfile(f"{pkg_cache_dir}/{get_local_file_name(url)}") for url in package.src_urls])
 
 
 def clear_cache(lfs_dir: str) -> None:

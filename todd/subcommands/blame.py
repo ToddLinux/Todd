@@ -1,5 +1,5 @@
-from typing import List
 import os.path
+from typing import List
 
 from ..index import get_index
 
@@ -28,4 +28,3 @@ def blame_handler(args: List[str]) -> None:
 
     if not found:
         print("No such file in file index")
-
