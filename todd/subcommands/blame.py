@@ -3,7 +3,8 @@ import os.path
 
 from ..index import get_index
 
-__all__ = [ "blame_args_validator", "blame_handler" ]
+__all__ = ["blame_args_validator", "blame_handler"]
+
 
 def blame_args_validator(args: List[str]) -> bool:
     if len(args) != 1:
@@ -15,7 +16,7 @@ def blame_args_validator(args: List[str]) -> bool:
 
 def blame_handler(args: List[str]) -> None:
     filename = os.path.abspath(args[0])
-    
+
     index = get_index("/")
     found = False
 
@@ -27,4 +28,4 @@ def blame_handler(args: List[str]) -> None:
 
     if not found:
         print("No such file in file index")
-    
+

@@ -1,7 +1,7 @@
 from typing import List, Callable
 
 
-__all__ = [ "Subcommand" ]
+__all__ = ["Subcommand"]
 
 
 class Subcommand:

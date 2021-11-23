@@ -6,7 +6,7 @@ from typing import Dict, Set
 
 from .package_classes import Package, PackageIndex
 
-__all__ = ["create_pkg_index", "add_to_index", "get_index"]
+__all__ = ["create_pkg_index", "add_to_index", "get_index", "pkg_index_exists"]
 
 BASE_DIR = pathlib.Path(__file__).parent.resolve()
 INDEX_FILE_PATH = "/var/lib/todd/status.json"

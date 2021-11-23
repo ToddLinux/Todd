@@ -1,9 +1,7 @@
 import sys
 
-from todd import subcommands
-from todd.index import pkg_index_exists
+from todd import subcommands, pkg_index_exists
 from argparse import ArgumentParser
-
 
 
 def main() -> bool:
@@ -18,7 +16,7 @@ def main() -> bool:
     if not pkg_index_exists("/"):
         print("Package index doesnt exist.")
         return False
-    
+
     if not subcommand_name in subcommands.SUBCOMMANDS:
         print("No such subcommand:", subcommand_name)
         return False
@@ -31,5 +29,7 @@ def main() -> bool:
 
     return True
 
+
 if __name__ == '__main__':
     sys.exit(0 if main() else 1)
+
