@@ -2,7 +2,7 @@
 import json
 import os
 import pathlib
-from typing import Dict, List
+from typing import Dict, Set
 
 from .package_classes import Package, PackageIndex
 
@@ -15,10 +15,10 @@ INDEX_FILE_DIR_PATH = "/var/lib/todd"
 
 def create_pkg_index(fake_root: str, package: Package) -> PackageIndex:
     """Index files created for this package in the fake root."""
-    index_files: List[str] = []
+    index_files: Set[str] = set()
     for root, _, files in os.walk(fake_root):
         for file in files:
-            index_files.append(f"/{os.path.relpath(os.path.join(root, file), fake_root)}")
+            index_files.add(f"/{os.path.relpath(os.path.join(root, file), fake_root)}")
     return PackageIndex(
         package.name,
         package.version,
@@ -40,8 +40,8 @@ def augment_to_index(lfs_dir: str, pkg: PackageIndex) -> None:
     index = get_index(lfs_dir)
     if pkg.name not in index:
         raise ValueError(f"Can't augment not installed package {pkg.name} to index.")
-    index[pkg.name].files += pkg.files
-    index[pkg.name].pass_idx += pkg.pass_idx
+    index[pkg.name].files.update(pkg.files)
+    index[pkg.name].pass_idx = pkg.pass_idx
     update_index(lfs_dir, index)
 
 
@@ -70,4 +70,4 @@ def get_index(lfs_dir: str) -> Dict[str, PackageIndex]:
 
 def update_index(lfs_dir: str, index: Dict[str, PackageIndex]) -> None:
     with open(f"{lfs_dir}/{INDEX_FILE_PATH}", "w") as file:
-        json.dump({pkg.name: pkg.__dict__ for pkg in index.values()}, file, indent=4)
+        json.dump({pkg.name: pkg.get_dict() for pkg in index.values()}, file, indent=4)

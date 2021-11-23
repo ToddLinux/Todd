@@ -1,4 +1,4 @@
-from typing import List
+from typing import Set, List, Dict, Any
 
 
 class PackageIndex:
@@ -9,7 +9,7 @@ class PackageIndex:
         name: str,
         version: str,
         pass_idx: int,
-        files: List[str]
+        files: Set[str]
     ):
         # name of package
         self.name = name
@@ -19,6 +19,14 @@ class PackageIndex:
         self.pass_idx = pass_idx
         # files belonging to package -> to be deleted when uninstalling
         self.files = files
+
+    def get_dict(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "version": self.version,
+            "pass_idx": self.pass_idx,
+            "files": list(self.files),
+        }
 
 
 class Package:
