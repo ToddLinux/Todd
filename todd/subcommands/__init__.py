@@ -1,7 +1,5 @@
-__all__ = [ "subcommand" ]
-
-from .subcommand import Subcommand
-from . import blame
+from .subcommand import *
+from .blame import *
 
 SUBCOMMANDS = {
     "blame": Subcommand(blame.blame_args_validator, blame.blame_handler)

@@ -3,12 +3,13 @@ import os.path
 
 from ..index import get_index
 
+__all__ = [ "blame_args_validator", "blame_handler" ]
 
 def blame_args_validator(args: List[str]) -> bool:
     if len(args) != 1:
         print("Invalid number of subarguments. Required 1: filename")
         return False
-    
+
     return True
 
 
