@@ -69,6 +69,15 @@ def fetch_package_sources(lfs_dir: str, package: Package) -> bool:
     for url in package.src_urls:
         local_file_name = get_local_file_name(url)
         dest_file = f"{pkg_cache_dir}/{local_file_name}"
+
+        # get file logic
+        # if not file: download
+        # if file and not checksum: download
+        # if file: happy
+        if not os.path.isfile(dest_file):
+            if not dwn_file(url, dest_file, local_file_name):
+                return False
+            
         # TODO: checksum
         if not os.path.isfile(dest_file):
             if not dwn_file(url, dest_file, local_file_name):
@@ -88,6 +97,7 @@ def is_cached(lfs_dir: str, package: Package) -> bool:
     :return: True if all satisfied False otherwise
     """
     pkg_cache_dir = get_pkg_cache_dir(lfs_dir, package)
+    # TODO: checksum
     return all([os.path.isfile(f"{pkg_cache_dir}/{get_local_file_name(url)}") for url in package.src_urls])
 
 
