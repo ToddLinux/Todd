@@ -22,6 +22,7 @@ class PackageIndex:
             "files": list(self.files),
         }
 
+
 class PackageSource:
     """Represents package source."""
 
@@ -31,6 +32,7 @@ class PackageSource:
 
     def __repr__(self):
         return f"url: {self.url}, checksum: {self.checksum}"
+
 
 class Package:
     """Represents build and installation."""
@@ -52,4 +54,3 @@ class Package:
         self.env = env
         # TODO: add version to default script path
         self.build_script = f"{repo}/{name}.sh" if build_script_name is None else f"{repo}/{build_script_name}"
-
