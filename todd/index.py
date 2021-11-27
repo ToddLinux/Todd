@@ -72,7 +72,7 @@ def get_index(lfs_dir: str) -> Dict[str, PackageIndex]:
                 pkg_json["name"],
                 pkg_json["version"],
                 pkg_json["pass_idx"],
-                pkg_json["files"],
+                set(pkg_json["files"]),
             )
     return index
 
