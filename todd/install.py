@@ -10,7 +10,7 @@ from typing import Dict, List, Tuple
 
 from .cache_sources import fetch_package_sources, get_pkg_cache_dir, is_cached
 from .index import add_to_index, augment_to_index, create_pkg_index, get_index
-from .package_classes import Package
+from .package_classes import Package, PackageSource
 
 __all__ = ["install_packages", "load_packages"]
 
@@ -24,6 +24,7 @@ LFS_TGT = "x86_64-lfs-linux-gnu"
 def get_sources(lfs_dir: str, package: Package) -> bool:
     """Fetch all sources that haven't been cached yet."""
     pkg_cache_dir = get_pkg_cache_dir(lfs_dir, package)
+
     if not is_cached(lfs_dir, package):
         if not fetch_package_sources(lfs_dir, package):
             return False
@@ -97,16 +98,19 @@ def load_packages(repo: str) -> Dict[Tuple[str, int], Package]:
         ):
             raise ValueError(f"package {raw_pkg} is faulty")
 
+        package_sources = [PackageSource(src["url"], src["checksum"]) for src in raw_pkg["src_urls"]]
+
         package = Package(
             raw_pkg["name"],
             raw_pkg["version"],
             raw_pkg["pass_idx"],
-            raw_pkg["src_urls"],
+            package_sources,
             raw_pkg["env"],
             repo,
             # using get() <- return None when not found
             raw_pkg.get("build_script"),
         )
+
         # TODO: work with versions
         if (package.name, package.pass_idx) in packages:
             raise ValueError(f"The repository '{repo}' contains the package '{package.name}' pass {package.pass_idx} twice")

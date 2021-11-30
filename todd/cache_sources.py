@@ -1,11 +1,12 @@
 """Download, track and delete cache package sources for later use."""
 import os
 import shutil
+import subprocess
 import sys
 
 import requests
 
-from .package_classes import Package
+from .package_classes import Package, PackageSource
 
 __all__ = [
     "get_pkg_cache_dir",
@@ -66,15 +67,39 @@ def fetch_package_sources(lfs_dir: str, package: Package) -> bool:
     if not os.path.isdir(pkg_cache_dir):
         os.makedirs(pkg_cache_dir)
 
-    for url in package.src_urls:
-        local_file_name = get_local_file_name(url)
+    for src in package.src_urls:
+        local_file_name = get_local_file_name(src.url)
         dest_file = f"{pkg_cache_dir}/{local_file_name}"
-        # TODO: checksum
-        if not os.path.isfile(dest_file):
-            if not dwn_file(url, dest_file, local_file_name):
+
+        if not is_cached_package_source(pkg_cache_dir, src):
+            if not dwn_file(src.url, dest_file, local_file_name):
                 return False
         else:
             print(f"Source: '{local_file_name}' for package {package.name} already downloaded")
+
+    return True
+
+
+def checksum(path: str) -> str:
+    return (
+        subprocess.run(
+            ["md5sum", path],
+            check=True,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+        )
+        .stdout.decode()
+        .split()[0]
+    )
+
+
+def is_cached_package_source(pkg_cache_dir, package: PackageSource) -> bool:
+    path = f"{pkg_cache_dir}/{get_local_file_name(package.url)}"
+    if not os.path.isfile(path):
+        return False
+    if not (checksum(path) == package.checksum):
+        return False
 
     return True
 
@@ -88,7 +113,12 @@ def is_cached(lfs_dir: str, package: Package) -> bool:
     :return: True if all satisfied False otherwise
     """
     pkg_cache_dir = get_pkg_cache_dir(lfs_dir, package)
-    return all([os.path.isfile(f"{pkg_cache_dir}/{get_local_file_name(url)}") for url in package.src_urls])
+
+    for src in package.src_urls:
+        if not is_cached_package_source(pkg_cache_dir, src):
+            return False
+
+    return True
 
 
 def clear_cache(lfs_dir: str) -> None:

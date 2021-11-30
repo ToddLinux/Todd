@@ -23,6 +23,17 @@ class PackageIndex:
         }
 
 
+class PackageSource:
+    """Represents package source."""
+
+    def __init__(self, url: str, checksum: str):
+        self.url = url
+        self.checksum = checksum
+
+    def __repr__(self):
+        return f"url: {self.url}, checksum: {self.checksum}"
+
+
 class Package:
     """Represents build and installation."""
 
@@ -31,7 +42,7 @@ class Package:
         name: str,
         version: str,
         pass_idx: int,
-        src_urls: List[str],
+        src_urls: List[PackageSource],
         env: str,
         repo: str,
         build_script_name: str = None,
