@@ -24,7 +24,7 @@ LFS_TGT = "x86_64-lfs-linux-gnu"
 def get_sources(lfs_dir: str, package: Package) -> bool:
     """Fetch all sources that haven't been cached yet."""
     pkg_cache_dir = get_pkg_cache_dir(lfs_dir, package)
-    
+
     if not is_cached(lfs_dir, package):
         if not fetch_package_sources(lfs_dir, package):
             return False

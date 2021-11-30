@@ -1,8 +1,8 @@
 """Download, track and delete cache package sources for later use."""
 import os
 import shutil
-import sys
 import subprocess
+import sys
 
 import requests
 
@@ -81,13 +81,17 @@ def fetch_package_sources(lfs_dir: str, package: Package) -> bool:
 
 
 def checksum(path: str) -> str:
-    return subprocess.run(
-        ["md5sum", path],
-        check=True,
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
-    ).stdout.decode().split()[0]
+    return (
+        subprocess.run(
+            ["md5sum", path],
+            check=True,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+        )
+        .stdout.decode()
+        .split()[0]
+    )
 
 
 def is_cached_package_source(pkg_cache_dir, package: PackageSource) -> bool:
@@ -109,7 +113,7 @@ def is_cached(lfs_dir: str, package: Package) -> bool:
     :return: True if all satisfied False otherwise
     """
     pkg_cache_dir = get_pkg_cache_dir(lfs_dir, package)
-    
+
     for src in package.src_urls:
         if not is_cached_package_source(pkg_cache_dir, src):
             return False
