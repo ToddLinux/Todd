@@ -179,7 +179,7 @@ def install_packages(
                 # only install when already installed pass is not -1
                 # TODO: add protection against installing -1 pass before last chroot pass has been installed
             else:
-                if package_idx.pass_idx >= package.pass_idx:
+                if package_idx.pass_idx >= package.pass_idx or package_idx.pass_idx == -1:
                     print(f"installing '{package.name}' for pass {package.pass_idx}: already installed or replaced with later pass")
                     continue
                 if package_idx.pass_idx < package.pass_idx - 1:
