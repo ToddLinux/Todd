@@ -35,21 +35,28 @@ class PackageSource:
 
 
 class Package:
-    """Represents build and installation."""
+    """Represents build and installation.
+
+    Parameters:
+
+    pass_idx:
+        -1 results in only not being installed if package has already been installed with pass_idx = -1
+
+    """
 
     def __init__(
         self,
         name: str,
         version: str,
-        pass_idx: int,
         src_urls: List[PackageSource],
         env: str,
         repo: str,
+        pass_idx: int = None,
         build_script_name: str = None,
     ):
         self.name = name
         self.version = version
-        self.pass_idx = pass_idx
+        self.pass_idx = -1 if pass_idx is None else pass_idx
         self.src_urls = src_urls
         self.env = env
         # TODO: add version to default script path

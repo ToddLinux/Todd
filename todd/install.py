@@ -8,17 +8,34 @@ import time
 from distutils.dir_util import copy_tree
 from typing import Dict, List, Tuple
 
-from .cache_sources import fetch_package_sources, get_pkg_cache_dir, is_cached
+from .cache_sources import fetch_package_sources, get_pkg_cache_dir, is_cached, dwn_file
 from .index import add_to_index, augment_to_index, create_pkg_index, get_index
 from .package_classes import Package, PackageSource
 
-__all__ = ["install_packages", "load_packages"]
+__all__ = ["install_packages", "load_packages", "update_repo"]
 
 
 FILE_DIR_PATH = pathlib.Path(__file__).parent.resolve()
 BUILD_FOLDER = "/tmp/todd_linux_build"
 FAKE_ROOT = "/tmp/todd_linux_fake_root"
 LFS_TGT = "x86_64-lfs-linux-gnu"
+REPO_DIR_PATH = "/var/lib/todd/repo"
+REPO_URL = "https://github.com/ToddLinux/ToddLinuxPackages/releases/latest/download/todd_linux_packages_repo.tar.xz"
+
+
+def update_repo() -> bool:
+    print("updating todd packages repo: ...")
+    if os.system(f"mkdir -p {REPO_DIR_PATH}"):
+        return False
+    os.chdir(REPO_DIR_PATH)
+    if not dwn_file(REPO_URL, f"{REPO_DIR_PATH}/repo.tar.xz", "todd_linux packages repo"):
+        return False
+    if os.system(f"tar xf repo.tar.xz"):
+        return False
+    os.remove("repo.tar.xz")
+    os.chdir("/")
+    print("updating todd packages repo: ok")
+    return True
 
 
 def get_sources(lfs_dir: str, package: Package) -> bool:
@@ -87,12 +104,11 @@ def load_packages(repo: str) -> Dict[Tuple[str, int], Package]:
         raw_packages = json.loads(file.read())["packages"]
     packages: Dict[Tuple[str, int], Package] = {}
     for raw_pkg in raw_packages:
-        # check integrity of packages file
+        # check integrity of package file
         # TODO: use json schema
         if (
             raw_pkg.get("name") is None
             or raw_pkg.get("version") is None
-            or raw_pkg.get("pass_idx") is None
             or raw_pkg.get("src_urls") is None
             or raw_pkg.get("env") is None
         ):
@@ -103,11 +119,11 @@ def load_packages(repo: str) -> Dict[Tuple[str, int], Package]:
         package = Package(
             raw_pkg["name"],
             raw_pkg["version"],
-            raw_pkg["pass_idx"],
             package_sources,
             raw_pkg["env"],
             repo,
             # using get() <- return None when not found
+            raw_pkg.get("pass_idx"),
             raw_pkg.get("build_script"),
         )
 
@@ -121,11 +137,12 @@ def load_packages(repo: str) -> Dict[Tuple[str, int], Package]:
 
 def install_packages(
     package_idents: List[Tuple[str, int]],
-    repo: str,
     env: str,
     lfs_dir: str,
     verbose: bool,
     jobs: int,
+    # not to be used for target installations
+    repo: str = REPO_DIR_PATH,
 ) -> bool:
     """Install all requested packages in order.
     A package is defined by a name and a pass index.
@@ -149,13 +166,21 @@ def install_packages(
         # check if pass is valid
         if package.name in index:
             package_idx = index[package.name]
-            if package_idx.pass_idx >= package.pass_idx:
-                print(f"installing '{package.name}' for pass {package.pass_idx}: already installed or replaced with later pass")
-                continue
-            if package_idx.pass_idx < package.pass_idx - 1:
-                print(f"package '{package.name}' for pass {package.pass_idx} hasn't finished earlier passes")
-                return False
-            # only install when already installed pass is the to be installed one -1
+            # -1 passes have to be handled extra (only to be used for env=target packages)
+            if package.pass_idx == -1:
+                if package_idx.pass_idx == -1:
+                    print(f"installing '{package.name}' for pass {package.pass_idx}: already installed for pass -1")
+                    continue
+                # only install when already installed pass is not -1
+                # TODO: add protection against installing -1 pass before last chroot pass has been installed
+            else:
+                if package_idx.pass_idx >= package.pass_idx:
+                    print(f"installing '{package.name}' for pass {package.pass_idx}: already installed or replaced with later pass")
+                    continue
+                if package_idx.pass_idx < package.pass_idx - 1:
+                    print(f"package '{package.name}' for pass {package.pass_idx} hasn't finished earlier passes")
+                    return False
+                # only install when already installed pass is the to be installed one -1
         # TODO: check version
 
         if not install_package(lfs_dir, package, verbose=verbose):
