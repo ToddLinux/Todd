@@ -31,6 +31,11 @@ def create_pkg_index(fake_root: str, package: Package) -> PackageIndex:
     )
 
 
+def in_index(lfs_dir: str, pkg: PackageIndex) -> bool:
+    index = get_index(lfs_dir)
+    return pkg.name in index
+
+
 def add_to_index(lfs_dir: str, new_pkg: PackageIndex) -> None:
     index = get_index(lfs_dir)
     if new_pkg.name in index:

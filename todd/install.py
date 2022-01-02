@@ -9,7 +9,7 @@ from distutils.dir_util import copy_tree
 from typing import Dict, List, Tuple
 
 from .cache_sources import fetch_package_sources, get_pkg_cache_dir, is_cached, dwn_file
-from .index import add_to_index, augment_to_index, create_pkg_index, get_index
+from .index import add_to_index, augment_to_index, create_pkg_index, get_index, in_index
 from .package_classes import Package, PackageSource
 
 __all__ = ["install_packages", "load_packages", "update_repo"]
@@ -89,8 +89,13 @@ def install_package(lfs_dir: str, pkg: Package, verbose=False) -> bool:
     pkg_index = create_pkg_index(FAKE_ROOT, pkg)
     copy_tree(FAKE_ROOT, lfs_dir)
     # create new entry or augment old one
-    if pkg.pass_idx:
+    if pkg.pass_idx > 0:
         augment_to_index(lfs_dir, pkg_index)
+    elif pkg.pass_idx == -1:
+        if in_index(lfs_dir, pkg_index):
+            augment_to_index(lfs_dir, pkg_index)
+        else:
+            add_to_index(lfs_dir, pkg_index)
     else:
         add_to_index(lfs_dir, pkg_index)
     print("copying files into root: ok, index updated")
