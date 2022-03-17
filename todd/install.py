@@ -3,6 +3,8 @@ import json
 import os
 import pathlib
 import shutil
+import yaml
+from schema import Schema, SchemaError
 import sys
 import time
 from distutils.dir_util import copy_tree
@@ -105,37 +107,38 @@ def install_package(lfs_dir: str, pkg: Package, verbose=False) -> bool:
 
 def load_packages(repo: str) -> Dict[Tuple[str, int], Package]:
     """Load all available packages from repo."""
-    with open(f"{repo}/packages.json", "r", newline="") as file:
-        raw_packages = json.loads(file.read())["packages"]
+    package_files = [path for path in os.listdir(repo) if path.endswith(".yml")]
     packages: Dict[Tuple[str, int], Package] = {}
-    for raw_pkg in raw_packages:
-        # check integrity of package file
-        # TODO: use json schema
-        if (
-            raw_pkg.get("name") is None
-            or raw_pkg.get("version") is None
-            or raw_pkg.get("src_urls") is None
-            or raw_pkg.get("env") is None
-        ):
-            raise ValueError(f"package {raw_pkg} is faulty")
 
-        package_sources = [PackageSource(src["url"], src["checksum"]) for src in raw_pkg["src_urls"]]
+    package_schema = Schema({
 
-        package = Package(
-            raw_pkg["name"],
-            raw_pkg["version"],
-            package_sources,
-            raw_pkg["env"],
-            repo,
-            # using get() <- return None when not found
-            raw_pkg.get("pass_idx"),
-            raw_pkg.get("build_script"),
-        )
+                            })
 
-        # TODO: work with versions
-        if (package.name, package.pass_idx) in packages:
-            raise ValueError(f"The repository '{repo}' contains the package '{package.name}' pass {package.pass_idx} twice")
-        packages[(package.name, package.pass_idx)] = package
+    for package_file in package_files:
+        with open(package_file, "r") as file:
+            package_raw = yaml.safe_load_all(file)
+        try:
+            package_schema.validate(package_raw)
+        except SchemaError as se:
+            # TODO: custom error message
+            raise se
+        
+
+    # package = Package(
+    #     raw_pkg["name"],
+    #     raw_pkg["version"],
+    #     package_sources,
+    #     raw_pkg["env"],
+    #     repo,
+    #     # using get() <- return None when not found
+    #     raw_pkg.get("pass_idx"),
+    #     raw_pkg.get("build_script"),
+    # )
+
+    # # TODO: work with versions
+    # if (package.name, package.pass_idx) in packages:
+    #     raise ValueError(f"The repository '{repo}' contains the package '{package.name}' pass {package.pass_idx} twice")
+    # packages[(package.name, package.pass_idx)] = package
 
     return packages
 
